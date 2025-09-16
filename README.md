@@ -15,8 +15,7 @@ Personal research project using satellite data (MODIS, ArcticDEM, TerraClimate, 
 
 ## Repo Contents
 - `figures/` → Maps and charts (e.g., 2007 vs 2023 habitat loss).  
-- `scripts/` → Google Earth Engine scripts used to generate analysis.  
-- `requirements.txt` → Python packages (if reproducing locally).  
+- `scripts/` → Google Earth Engine scripts used to generate analysis.   
 
 ---
 
