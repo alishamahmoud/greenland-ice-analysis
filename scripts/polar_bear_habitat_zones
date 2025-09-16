@@ -1,0 +1,102 @@
+// Ice Coverage Analysis for Greenland (2007–2023)
+// Loads MODIS NDSI, calculates mean annual sea ice coverage,
+// outputs maps and area statistics.
+
+// https://code.earthengine.google.com/f6e3568739c41a7e005623b8d04f8889
+
+// Polar Bear Habitat Suitability Mapping (Greenland, 2007 vs 2023)
+// Dataset sources: 
+//   - NOAA OISST V2.1 (Sea Surface Temperature)
+//   - MODIS MOD10A1 (NDSI Snow/Ice Cover)
+// Reference: NSIDC "Quick Facts About Sea Ice"
+//   https://nsidc.org/learn/parts-cryosphere/sea-ice/quick-facts-about-sea-ice
+// Habitat criteria for polar bears (simplified):
+//   1. Sea ice presence (NDSI > 15%)
+//   2. Cold sea surface temperature (SST < 0°C)
+// Output: Habitat mask + estimated habitat area (km²)
+
+// Define study region
+// Bounding box around Greenland (lon/lat)
+var greenland = ee.Geometry.Rectangle([-75, 58, -10, 85]);
+
+// Years of interest (2007 to 2023)
+var years = [2007, 2023];
+
+// Function: getHabitatMask
+// Purpose: For a given year, calculate:
+//   - Mean SST (°C)
+//   - Mean NDSI Snow Cover (%)
+//   - Habitat mask (ice present AND SST < 0°C)
+//   - Estimated habitat area in km²
+//   - Styled visualization for map display
+function getHabitatMask(year) {
+  // Load NOAA OISST daily data to get annual mean SST
+  var sst = ee.ImageCollection('NOAA/CDR/OISST/V2_1')
+              .filterDate(year + '-01-01', year + '-12-31')
+              .select('sst')
+              .mean()
+              .clip(greenland);
+
+  // Loda MODIS daily NDSI (Snow Cover) for annual mean
+  var ice = ee.ImageCollection('MODIS/006/MOD10A1')
+              .filterDate(year + '-01-01', year + '-12-31')
+              .select('NDSI_Snow_Cover')
+              .mean()
+              .unmask(0)
+              .clip(greenland);
+
+  // Apply thresholds
+  var iceMask = ice.gt(15); 
+  var sstMask = sst.lt(0);
+  
+  // Habitat = both conditions satisfied
+  var habitat = sstMask.and(iceMask).rename('habitat');
+  
+  // Style for visualization
+  var styled = habitat.updateMask(habitat)
+                .visualize({palette: ['#004080'], min: 0, max: 1});
+                
+  // Compute total habitat area in km^2
+  var areaImage = habitat.multiply(ee.Image.pixelArea()).divide(1e6); // km²
+  var area = areaImage.reduceRegion({
+    reducer: ee.Reducer.sum(),
+    geometry: greenland,
+    scale: 5000,
+    maxPixels: 1e9
+  }).get('habitat');
+
+  // Return results as object
+  return {
+    year: year,
+    image: styled,
+    area: area
+  };
+}
+
+// Run function for 2007 and 2023
+var res2007 = getHabitatMask(2007);
+var res2023 = getHabitatMask(2023);
+
+// Visualization on map
+Map.centerObject(greenland, 3);
+Map.addLayer(res2007.image, {}, 'Polar Bear Habitat 2007');
+Map.addLayer(res2023.image, {}, 'Polar Bear Habitat 2023');
+
+// Print habitat area values
+print('Habitat Area 2007 (km²):', res2007.area);
+print('Habitat Area 2023 (km²):', res2023.area);
+
+// Chart: Habitat area decline
+var areas = ee.Array([res2007.area, res2023.area]);
+var chart = ui.Chart.array.values(
+  areas,
+  0,
+  years
+).setChartType('ColumnChart')
+ .setOptions({
+   title: 'Polar Bear Habitat Area (km²)',
+   hAxis: {title: 'Year'},
+   vAxis: {title: 'Habitat Area (km²)'},
+ });
+
+print(chart);
