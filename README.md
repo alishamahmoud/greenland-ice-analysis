@@ -9,7 +9,10 @@ Personal research project using satellite data (MODIS, ArcticDEM, TerraClimate, 
 - Polar bear suitable habitat decreased by ~51% (≈29,500 km² lost).  
 - Seal and walrus suitable habitats declined by ~49–50% (≈29,000 km²).  
 - Regional warming detected up to **>2°C** between 2007–2023.  
-- Glacier thinning and increased ice velocity concentrated on coastal margins.  
+- Glacier thinning and increased ice velocity concentrated on coastal margins.
+
+  <img width="301" height="333" alt="Screenshot 2025-09-16 at 9 40 11 PM" src="https://github.com/user-attachments/assets/3a78ae73-5c4c-4f54-9ad9-939f74b3bdd7" />
+
 
 ---
 
